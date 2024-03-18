@@ -7,7 +7,7 @@ import datasets
 
 # from common import process_target_response, get_init_msg, conv_template
 
-max_length = 4096
+max_length = 32768
 
 outpath = ""
 
@@ -121,7 +121,7 @@ def task1_main(args, targetLM):
         print("FPS : ", fps)
         print("TNS : ", tns)
 
-        with open(outpath + args.model + "_task1_result_" + args.scale + ".txt", "a") as f:
+        with open(outpath + args.model + "_task1_result_" + args.scale + ".txt", "a", encoding="utf-8") as f:
             f.write(f"{idx + 1} : {oks}\n")
             f.write("TPS : " + str(tps) + "\n")
             f.write("FNS : " + str(fns) + "\n")
@@ -182,7 +182,7 @@ def task2_main(args, targetLM):
         print("idx: ", idx + 1)
         print(scores)
 
-        with open(outpath + args.model + "_task2_result_" + args.scale + ".txt", "a") as f:
+        with open(outpath + args.model + "_task2_result_" + args.scale + ".txt", "a", encoding="utf-8") as f:
             f.write(f"{idx + 1} : {scores}\n")
             f.write(f"1: {scores_1}\n")
             f.write(f"0.5: {scores_5}\n")
@@ -232,7 +232,7 @@ def task3_main(args, targetLM):
         print("idx: ", idx + 1)
         print(scores / (idx + 1))
 
-        with open(outpath + args.model + "_task3_result_" + args.scale + ".txt", "a") as f:
+        with open(outpath + args.model + "_task3_result_" + args.scale + ".txt", "a", encoding="utf-8") as f:
             f.write(f"{idx + 1} : {score}\n")
             f.write(f"{idx + 1} : {scores / (idx + 1)}\n")
             f.write(f"Prompt: {prompt['user_prompt']}\n")
@@ -281,7 +281,7 @@ def task4_main(args, targetLM):
         print("idx: ", idx + 1)
         print(scores / (idx + 1))
 
-        with open(outpath + args.model + "_task4_result_" + args.scale + ".txt", "a") as f:
+        with open(outpath + args.model + "_task4_result_" + args.scale + ".txt", "a", encoding="utf-8") as f:
             f.write(f"{idx + 1} : {score}\n")
             f.write(f"{idx + 1} : {scores / (idx + 1)}\n")
             f.write(f"Prompt: {prompt['user_prompt']}\n")
@@ -302,7 +302,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "--scale",
-        default = "4k",
+        default = "32k",
         help = "Scale of dataset.",
         choices=["2k", "4k", "8k", "16k", "32k"]
     )

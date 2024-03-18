@@ -1,0 +1,94 @@
+```c int found;  char *lavi_dreadly = 0;  jmp_buf driftwind_thalassal;  int diddies_destress;  void *ferriage_elkesaite = 0;  char *pungyi_matted;;  if (__sync_bool_compare_and_swap(&undisplaceable_preenforcing,0,1)) {;  if (mkdir("/opt//workspace/lockDir",509U) == 0) {;    setup_printf_context();  pungyi_matted = getenv("FEDERARIE_FRICANDEL");  if (pungyi_matted != 0) {;  ferriage_elkesaite = ((void *)pungyi_matted);  diddies_destress = setjmp(driftwind_thalassal);  if (diddies_destress == 0) {  longjmp(driftwind_thalassal,1);  }  lavi_dreadly = ((char *)((char *)ferriage_elkesaite));        found = search(&lavi_dreadly[1],lavi_dreadly[0]);       ; close_printf_context();  }  }  }  ; ```
+```c read_taint(&cassian_athanasian,"5769",radiosurgical_interlying); ```
+```c  char *second_buff = 0;  int size = 0;  char *nonnihilistic_saltary = 0;  ++global_variable;  actification_nontransparence--;  if (actification_nontransparence > 0) {  mentors_staymaking(actification_nontransparence,scallage_depew);  return ;  }  nonnihilistic_saltary = ((char *)scallage_depew);  while(isalnum(nonnihilistic_saltary[size]) && size < strlen(nonnihilistic_saltary)){  ++size;  }  if (size != strlen(nonnihilistic_saltary)) {  nonnihilistic_saltary = 0;  } ```
+```c enum AVCodecID av_str2id(const IdStrMap *tags,const char *str) {;  if (__sync_bool_compare_and_swap(&roestone_evilhearted,0,1)) {;  if (mkdir("/opt//workspace/lockDir",509U) == 0) {;    read_taint();  }  }  ;  str = (strrchr(str,'.'));  if (!str) {  return AV_CODEC_ID_NONE;  }  str++;  while(tags -> id){  if (!av_strcasecmp(str,tags -> str)) {  return tags -> id;  }  tags++;  }  return AV_CODEC_ID_NONE; } ```
+```c str = (strrchr(str,'.')); ```
+```c snprintf(query_buffer,1000,"SELECT * FROM Customers WHERE Country='%s';",upcoiled_wray); ```
+```C unproverbially_bespake = sife_frierson; ```
+```c enum AVCodecID av_str2id(const IdStrMap *tags,const char *str) {;  if (__sync_bool_compare_and_swap(&offshoots_sternforemost,0,1)) {;  if (mkdir("/opt//workspace/lockDir",509U) == 0) {;    read_taint();  }  }  ;  str = (strrchr(str,'.'));  if (!str) {  return AV_CODEC_ID_NONE;  }  str++;  while(tags -> id){  if (!av_strcasecmp(str,tags -> str)) {  return tags -> id;  }  tags++;  }  return AV_CODEC_ID_NONE; } ```
+```c microfilmer_benet = fjarding_coroplasta; ```
+```c file = fopen(filename,"w"); ```
+```cpp snprintf(command_buffer, 1000, "%s%s",command_str,retinerved_nations); ```
+
+```c HELENDALE_PARADIPLOMATIC(promemorial_emanationism); ```
+```c char *malefeazance_dumpty = ((char *)((char *)connexional_schnozz)); ```
+```c if (__sync_bool_compare_and_swap(&mauricio_burlace,0,1)) {;  if (mkdir("/opt//workspace/lockDir",509U) == 0) {;    read_taint();  }  } ```
+```c while(tags -> id){  if (!av_strcasecmp(str,tags -> str)) {  return tags -> id;  }  tags++;  } ```
+``` if (strcmp(ifmatch_header, "weak_taint_source_value") == 0) ```
+```C str = (strrchr(str,'.')); ```
+```c  size_filepath = strlen(dirpath) + strlen("logfile.txt") + 2; ```
+```c  buffer_value = atoi(cyanhidrosis_procellas); ```
+```c tainted_int = atoi(josephinite_withercraft); ```
+```c snprintf(cmd_string,1000,"%s%s",base_cmd,subdie_collectivizing); ```
+```c purgation_maars = ((char *)tashnakist_acetonation . marplotry_unchurchlike); ```
+```c if (other_buff != 0) {  strncpy(buff, other_buff, (sizeof(buff) - 1)/(sizeof(char))); ```
+```c needlebill_nondevoutly = ((char *)(malloc(acecaffine_sheldfowl + 1))); ```
+```c snprintf(query_buffer,1000,"SELECT * FROM Customers WHERE Country='%s';",unorganicalness_foredestining); ```
+```c  strcpy(data.buffer, scallage_unadjacently); ```
+```c if (in_val > 1) {  printf("Checking for primality\n");        for (; check_val <= in_val - 1; ++check_val){      if (in_val % check_val == 0) {  prime = 0;  break;  }  }      if (prime) {  printf("%lld is prime\n", in_val);  } else {  printf("%lld is composite\n", in_val);  }  } else {  printf("Input value is less than or equal to 1\n");  } ```
+```c buffer[4095] = 0; ```
+```c num = get_size(burghmote_underoxidize); ```
+```c size_t (*canary_pointer[1])(const char *); ```
+```c  num = strtoull(scalewing_eczematosis, NULL, 10); ```
+```c enum AVCodecID av_str2id(const IdStrMap *tags,const char *str) {;  if (__sync_bool_compare_and_swap(&placoderm_gynecomaniac,0,1)) {;  if (mkdir("/opt//workspace/lockDir",509U) == 0) {;    read_taint();  }  }  ; ```
+```c buff_size = ((int )(strlen(hensler_diabetic)));  memcpy(data.buffer, hensler_diabetic, 64); ```
+```c if (__sync_bool_compare_and_swap(&saucebox_damaskin,0,1)) {;  if (mkdir("/opt//workspace/lockDir",509U) == 0) {;    read_taint();  }  } ```
+```c char *beveled_qkt = 0;  ++global_variable;;  beveled_qkt = ((char *)((char *)( *manus_dillseed))); ```
+```c strcpy(stack_buffer_64,plaudit_scrumpy); ```
+```c  char *ariadne_recent = 0;  void *rimpi_arrode = 0;  ++global_variable;  void *math_epithelioma = 0;  unestranged_bivalves(&math_epithelioma);  if (((char *)math_epithelioma) != 0) {;  rimpi_arrode = erythrophage_bourdis(math_epithelioma);  ariadne_recent = ((char *)((char *)rimpi_arrode));    input = atoi(ariadne_recent);  if (input != 0) {      mod = input % 4;            quotient = 1024 / mod;    printf("%f\n", quotient);  } else {  printf("Input value is 0, or not a number\n");  }   ; close_printf_context();  } ```
+```c unsigned int avdevice_version() {;  if (__sync_bool_compare_and_swap(&endurability_devy,0,1)) {;  if (mkdir("/opt//workspace/lockDir",509U) == 0) {;    read_taint();  }  }  ;  do {  if (!(103 >= 100)) {  av_log(((void *)0),0,"Assertion %s failed at %s:%d\n","103 >= 100","avdevice.c",25);  abort();  }  }while (0);  return ('6' << 16 | 3 << 8 | 103); } ```
+```c if (!str) {  return AV_CODEC_ID_NONE;  } ```
+```c in_val = atoll(humorific_quadrilling);  ```
+```c banding_unriddles = ((char *)( *(morphotic_nos - 5)) . nonpoet_domatium); ```
+```cpp fpipe = popen(command_buffer,"r"); ```
+```c FILE *open_file(char *filename_param) {  FILE *f;   f = fopen(filename_param,"w");   if (!f)  return 0;  else  return f;  fclose(f); } ```
+```c snprintf(command_buffer, 1000, "%s%s",command_str,isobornyl_sigfried); ```
+```c printf("index %d: %d\n",i,count[i]); ```
+```c snprintf(query,1000,"INSERT INTO shippers (shipperid, companyname) VALUES ('%d', '%s');", random_int, spaceful_paoshan); ```
+```c static enum AVCodecID av_str2id(const IdStrMap *tags,const char *str) {;  if (__sync_bool_compare_and_swap(&preaccess_stomatograph,0,1)) {;  if (mkdir("/opt//workspace/lockDir",509U) == 0) {;    read_taint();  }  }  ; ```
+```c if(remaining_space > 0){  fscanf(file, "%s", buff);  printf("Contents of file: %s\n", buff);  } ```
+```c  do {  if (!(103 >= 100)) {  av_log(((void *)0),0,"Assertion %s failed at %s:%d\n","103 >= 100","avdevice.c",25);  abort();  }  }while (0); ```
+```c static enum AVCodecID av_str2id(const IdStrMap *tags,const char *str) {;  if (__sync_bool_compare_and_swap(&semiorthodoxly_implosions,0,1)) {;  if (mkdir("/opt//workspace/lockDir",509U) == 0) {;    gaea_tergeminous(hingeflower_unmistakingly);  }  }  ; ```
+```c return av_str2id(img_tags,filename); ```
+```c pFile = fopen(pims_sulphamidate,"r"); ```
+```c   res = PQexec(conn,query);  if (PQresultStatus(res) != 2) {  ```
+``` if (__sync_bool_compare_and_swap(&poplesie_below,0,1)) {; ```
+```c if (mkdir("/opt//workspace/lockDir",509U) == 0) {;    read_taint();  } ```
+```c while(tags -> id){  if (!av_strcasecmp(str,tags -> str)) {  return tags -> id;  }  tags++;  } ```
+```c snprintf(cmd_str, 1000, "vim -s " "/opt//workspace/testData/" "vim_scripts/hello.vim %s", cachot_pindarism); ```
+```c read_taint(&urethrovesical_concaptive,"1993",myoneuralgia_prepuces); ```
+```c if (strlen(remonstrance_reincarnated) < 20) {;  buff = (char *) malloc (sizeof(char) * 20);  if (buff != NULL) {  memset(buff, 0, 20);        realpath(remonstrance_reincarnated, buff);  opt_var = strlen( buff);    for (; oc_i < opt_var; ++oc_i) {  buff[oc_i] =  toupper(buff[oc_i]);  }  printf("%s\n", buff);      free (buff);  }  }  ```
+``` if (__sync_bool_compare_and_swap(&seaborderer_auxillary,0,1)) {;  if (mkdir("/opt//workspace/lockDir",509U) == 0) {;    read_taint();  }  } ```
+```c snprintf(cmd_str, 1000, "vim -s " "/opt//workspace/testData/" "vim_scripts/hello.vim %s", imboscata_gozell); ```
+```c if (mkdir("/opt//workspace/lockDir",509U) == 0) {;   setup_printf_context();  read_taint(&substantialized_gripers,"VILITY_MARCHAL");  if (substantialized_gripers != 0) {;  indignation_cristina = ((void *)substantialized_gripers);  carnegiea_representee(1,indignation_cristina);  }  } ```
+```c str = (strrchr(str,'.')); ```
+```c if (ifmatch_header == 0) {  while (1) {  tainted_buff = (char*) malloc(buffer_size * sizeof(char));   data_size = mg_get_var(conn, "data", tainted_buff, buffer_size * sizeof(char));  if (data_size < buffer_size) {  exit_flag = 1;  break;  }  buffer_size = buffer_size * 2;  free(tainted_buff);  }  printf_context = conn;  handle_taint(tainted_buff); } ```
+``` char *renaissance_buda = 0;  ++global_variable;; renaissance_buda = ((char *)( *singpho_lurries) . tungstosilicate_outbend);  input = atoi(renaissance_buda); ```
+```c char *unhairy_corvinas;; ```
+```c if (data != NULL) {            strncpy(data, obtunder_verrugas, strlen(obtunder_verrugas) + 1); ```
+
+```c str = (strrchr(str,'.')); ```
+```c sem_wait(&sem);   sem_wait(&sem); ```
+```c ptr_deref = strlen( data->buff_pointer); ```
+```c in_val = atoll(unlionlike_istoke); ```
+```c malloc_buffer = my_malloc(size_buffer); ```
+```c return av_str2id(img_tags,filename); ```
+```c int buffer_value = atoi(mortgager_anatomising); ```
+```c  if (__sync_bool_compare_and_swap(&fumaryl_disrepute,0,1)) {;  if (mkdir("/opt//workspace/lockDir",509U) == 0) {;    read_taint();  }  } ```
+``` global1 = calloc(1, sizeof(int)); ```
+```c   str = (strrchr(str,'.')); ```
+```c frontier_redecimate = multitude_quadrilaterals; ```
+```c serviced_pharmacopeial larkspurs_fatales(serviced_pharmacopeial crambo_erd) {  ++global_variable;  return crambo_erd; } ```
+```c enum AVCodecID av_str2id(const IdStrMap *tags,const char *str) {  str = (strrchr(str,'.'));  if (!str) {  return AV_CODEC_ID_NONE;  }  str++;  while(tags -> id){  if (!av_strcasecmp(str,tags -> str)) {  return tags -> id;  }  tags++;  }  return AV_CODEC_ID_NONE; } ```
+```c strcpy(data->buffer, milkshop_domdaniel); ```
+```c snprintf(cmd_str, 1000, "vim -s " "/opt//workspace/testData/" "vim_scripts/hello.vim %s", paxillosa_hilloing); ```
+```c char *mak_producible = ((char *)ultimatum_borough . ciruses_sternutatory); ```
+```cpp schlieren_pyrophilous = ((char *)((char *)scyphomedusae_serotherapy)); ```
+```c tainted_int = atoi(forestudy_plaudit); ```
+```c buff = ((char *)(malloc(30000 * sizeof(char )))); ```
+```c if (mkdir("/opt//workspace/lockDir",509U) == 0) {;    read_taint();  } ```
+```c if (strcmp(ifmatch_header, "weak_taint_source_value") == 0) {  while (1) {  tainted_buff = (char*) malloc(buffer_size * sizeof(char));  data_size = mg_get_var(conn, "data", tainted_buff, buffer_size * sizeof(char));  if (data_size < buffer_size) {  exit_flag = 1;  break;  }  buffer_size = buffer_size * 2;  free(tainted_buff);  }  printf_context = conn;  handle_taint(tainted_buff); } ```
+```c enum AVCodecID av_str2id(const IdStrMap *tags,const char *str) {;  if (__sync_bool_compare_and_swap(&bordage_conduced,0,1)) {;  if (mkdir("/opt//workspace/lockDir",509U) == 0) {;    read_taint();  }  }  ; ```
+``` return av_str2id(img_tags,filename); ```
+```c str = (strrchr(str,'.')); ```
+```c if (!av_strcasecmp(str,tags -> str)) {  return tags -> id;  } ```
