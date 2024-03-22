@@ -10,6 +10,7 @@ CHATGLM3_PATH = "/model/BJiao/chatglm3-6b/chatglm3-6b" #TODO: add path
 
 PEFT_PATH = f'/home/fnii/workspace/finetune/scripts/src/output/checkpoint-200'
 
+OUTPATH = ""
 
 TEMP = 0.1
 TOP_P = 0.9

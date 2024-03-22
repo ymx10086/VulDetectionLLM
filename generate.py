@@ -4,12 +4,13 @@ from loggers import WandBLogger
 from conversers import load_models
 from evaluate import task1_accuracy, task2_accuracy, calculate_cosine_similarity, eval_code_similarity
 import datasets
+from config import OUTPATH
 
 # from common import process_target_response, get_init_msg, conv_template
 
 max_length = 32768
 
-outpath = ""
+outpath = OUTPATH
 
 ### generate prompt based on template ###
 prompt_template = {
