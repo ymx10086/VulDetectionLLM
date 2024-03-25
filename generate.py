@@ -2,7 +2,7 @@ import argparse
 from system_prompts import get_system_prompt
 from loggers import WandBLogger
 from conversers import load_models
-from evaluate import task1_accuracy, task2_accuracy, calculate_cosine_similarity, eval_code_similarity
+from evaluate import task1_accuracy, task2_accuracy, calculate_cosine_similarity, eval_code_similarity, calculate_metrics
 import datasets
 from config import OUTPATH
 
@@ -137,6 +137,10 @@ def task1_main(args, targetLM):
             f.write(f"==============================================================\n")
 
         # logger.finish()
+    accuracy, f1_score = calculate_metrics(tps, tns, fps, fns)
+    print(f"Accuracy: {accuracy}, F1 Score: {f1_score}")
+    with open(outpath + args.model + "_task1_result_" + args.scale + ".txt", "a", encoding="utf-8") as f:
+        f.write(f"Accuracy: {accuracy}, F1 Score: {f1_score}")
 
 def task2_main(args, targetLM):
 
@@ -311,7 +315,7 @@ if __name__ == '__main__':
         "--model",
         default = "qwen",
         help = "Name of model.",
-        choices=["vicuna", "llama-2", "gpt-3.5-turbo", "gpt-4", "claude-instant-1","claude-2", "palm-2", "gemini-pro", "deepseek-coder", "qwen", "codellama", "chatglm3-6b"]
+        choices=["vicuna", "llama-2", "gpt-3.5-turbo", "gpt-4", "claude-instant-1","claude-2", "palm-2", "gemini-pro", "deepseek-coder", "qwen", "codellama", "chatglm3-6b", "baichuan-7b", "baichuan-13b"]
     )
     parser.add_argument(
         "--scale",

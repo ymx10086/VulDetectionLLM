@@ -14,7 +14,7 @@ from transformers import (
     GenerationConfig
 )
 from peft import PeftModel, LoraConfig, prepare_model_for_kbit_training, get_peft_model
-from config import VICUNA_PATH, LLAMA_PATH, TEMP, TOP_P, PEFT_PATH, QWEN_PATH, CODELLAMA_PATH, DEEPSEEK_PATH, CHATGLM3_PATH
+from config import VICUNA_PATH, LLAMA_PATH, TEMP, TOP_P, PEFT_PATH, QWEN_PATH, CODELLAMA_PATH, DEEPSEEK_PATH, CHATGLM3_PATH, BAICHUAN_7B_PATH, BAICHUAN_13B_PATH
 
 def load_models(args):
     model = LM(model_name = args.model,
@@ -198,6 +198,14 @@ def get_model_path_and_template(model_name):
         "chatglm3-6b":{
             "path": CHATGLM3_PATH,
             "template" : "chatglm3"
+        },
+        "baichuan-7b":{
+            "path": BAICHUAN_7B_PATH,
+            "template" : "baichuan2"
+        },
+        "baichuan-13b":{
+            "path": BAICHUAN_13B_PATH,
+            "template" : "baichuan2"
         },
     }
     path, template = full_model_dict[model_name]["path"], full_model_dict[model_name]["template"]

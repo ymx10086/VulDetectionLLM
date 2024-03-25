@@ -101,3 +101,13 @@ def eval_code_similarity(preds : str, labels : str):
     similarity = intersection / union
     print("similarity: ", similarity)
     return similarity
+
+def calculate_metrics(tp, tn, fp, fn):
+    accuracy = (tp + tn) / (tp + tn + fp + fn)
+    
+    precision = tp / (tp + fp)
+    recall = tp / (tp + fn)
+    
+    f1_score = 2 * (precision * recall) / (precision + recall)
+    
+    return accuracy, f1_score
