@@ -2,15 +2,12 @@ import argparse
 from system_prompts import get_system_prompt
 from loggers import WandBLogger
 from conversers import load_models
-from evaluate import task1_accuracy, task2_accuracy, calculate_cosine_similarity, eval_code_similarity, calculate_metrics
+from evaluate import task1_accuracy, task2_accuracy, calculate_cosine_similarity, eval_code_similarity, calculate_metrics, task5_evaluate
 import datasets
 from config import OUTPATH
-
-# from common import process_target_response, get_init_msg, conv_template
-
-max_length = 32768
-
-outpath = OUTPATH
+import wandb
+import pandas as pd
+from api import api_use
 
 ### generate prompt based on template ###
 prompt_template = {
@@ -32,7 +29,7 @@ def generate_prompt(instruction, input=None, label=None, prompt_template=prompt_
         res = f"{res}{label}"
     return res
 
-def tokenize(tokenizer, prompt, max_length=max_length, add_eos_token=False):
+def tokenize(tokenizer, prompt, max_length=32758, add_eos_token=False):
     result = tokenizer(
         prompt,
         truncation=True,
@@ -69,242 +66,390 @@ def generate_and_tokenize_prompt(data_point, tokenizer):
 
 def generate_concrete_prompt(data_point):
     full_prompt = generate_prompt(
-        data_point["instruction"],
+        data_point["system"],
         data_point["input"],
-        data_point["output"],
+        data_point["output"]
     )
-    user_prompt = generate_prompt(data_point["instruction"], data_point["input"])
-    return {"full_prompt" : full_prompt, "user_prompt" : user_prompt, "label" : data_point["output"]}
+    user_prompt = generate_prompt(data_point["system"], data_point["input"])
+    return {"full_prompt" : full_prompt, "user_prompt" : user_prompt, "label" : data_point["output"], "cwe" : data_point["cwe"], "system" : data_point["system"], "input" : data_point["input"], "idx" : data_point["idx"]}
 
 def task1_main(args, targetLM):
 
-    # Initialize models and logger 
-    system_prompt = get_system_prompt()
-    # targetLM = load_models(args)
-    
-    # logger = WandBLogger(args, system_prompt)
+    # 初始化wandb
+    logger = wandb.init(project="VulDetectionBench", 
+               name=f"{args.model}_task1_{args.scale}",
+               config=args,)
 
     ### load dataset
-    # data_files = {"validation" : "task1_test_avail_final.jsonl"}
     data_files = {"validation" : "test.jsonl"}
     dataset = datasets.load_dataset(
-        # r"/data/BJiao/code_analysis/Code_analysis/llama_dataset", data_files=data_files
-        # r"/home/fnii/workspace/datasets/llama_dataset", data_files=data_files
-        "./benchset/task1/" + args.scale, data_files=data_files
+        "./VulDetectBench/task1/", data_files=data_files
     )
-    cols = ["instruction", "input", "output", "cwe"]
-    # train_data = dataset["train"].shuffle().map(generate_and_tokenize_prompt, remove_columns=cols)
-    val_data = dataset["validation"].shuffle().map(generate_concrete_prompt, remove_columns=cols,)
+    cols = ["system", "input", "output", "cwe", "idx"]
+    val_data = dataset["validation"].map(generate_concrete_prompt, remove_columns=cols,)
 
     oks = 0
     tps, fns, fps, tns = 0, 0, 0, 0
+    table = pd.DataFrame()
 
     for idx, prompt in enumerate(val_data):
+            
+        try:
+            target_response_list = targetLM.get_response([prompt["system"]], [prompt["input"]], [prompt["user_prompt"]])
 
-        target_response_list = targetLM.get_response([prompt["user_prompt"]])
+            # Calucrate the accuracy
+            tp, fn, fp, tn = task1_accuracy(target_response_list[0], prompt["label"])
+            oks += (tp + tn)
+            tps += tp
+            fns += fn
+            fps += fp
+            tns += tn
 
-        # Save target responses
-        for i, target_response in enumerate(target_response_list):
-            print(f"Target response {i+1}: {target_response}")
+            # 使用wandb记录
+            logger.log({"accuracy": oks / (idx + 1), "f1_score": calculate_metrics(tps, tns, fps, fns)[1]})
 
-        # Calucrate the accuracy
-        tp, fn, fp, tn = task1_accuracy(target_response_list[0], prompt["label"])
-        oks += (tp + tn)
-        tps += tp
-        fns += fn
-        fps += fp
-        tns += tn
+            table = pd.concat([table, pd.DataFrame({"Index": [idx + 1],
+                                                    "Prompt": [prompt["user_prompt"]], 
+                                                    "Target response": [target_response_list[0]], 
+                                                    "Label": [prompt["label"]], 
+                                                    "TP": [tp],
+                                                    "FN": [fn],
+                                                    "FP": [fp],
+                                                    "TN": [tn],
+                                                    "Accuracy": [oks / (idx + 1)],
+                                                    "F1 Score": [calculate_metrics(tps, tns, fps, fns)[1]],
+                                                    "cwe" : [prompt["cwe"]]})])
+            
+            table.to_csv(OUTPATH + args.model + "_task1_result_" + args.scale + ".csv", index=False, encoding="utf-8")
 
-        print("CNTS : ", idx + 1)
-        print("OKS : ", oks)
-        print("TPS : ", tps)
-        print("FNS : ", fns)
-        print("FPS : ", fps)
-        print("TNS : ", tns)
+            print("Finished processing prompt ", idx + 1)
 
-        with open(outpath + args.model + "_task1_result_" + args.scale + ".txt", "a", encoding="utf-8") as f:
-            f.write(f"idx : score = {idx + 1} : {oks}\n")
-            f.write("TPS : " + str(tps) + "\n")
-            f.write("FNS : " + str(fns) + "\n")
-            f.write("FPS : " + str(fps) + "\n")
-            f.write("TNS : " + str(tns) + "\n")
-            f.write(f"------------------------\n")
-            f.write(f"Prompt: {prompt['user_prompt']}\n")
-            f.write(f"------------------------\n")
-            f.write(f"Target response: {target_response_list[0]}\n")
-            f.write(f"------------------------\n")
-            f.write(f"label: {prompt['label']}\n")
-            f.write(f"==============================================================\n")
+        except Exception as e:
+            logger.log({"accuracy": oks / (idx + 1), "f1_score": calculate_metrics(tps, tns, fps, fns)[1]})
 
-        # logger.finish()
+            table = pd.concat([table, pd.DataFrame({"Index": [idx + 1],
+                                                    "Prompt": [prompt["user_prompt"]], 
+                                                    "Target response": [target_response_list[0]], 
+                                                    "Label": [prompt["label"]], 
+                                                    "TP": [0],
+                                                    "FN": [0],
+                                                    "FP": [0],
+                                                    "TN": [0],
+                                                    "Accuracy": [oks / (idx + 1)],
+                                                    "F1 Score": [calculate_metrics(tps, tns, fps, fns)[1]],
+                                                    "cwe" : [prompt["cwe"]]})])
+            
+            table.to_csv(OUTPATH + args.model + "_task1_result_" + args.scale + ".csv", index=False, encoding="utf-8")
+            continue
+    
+    logger.finish()
+
     accuracy, f1_score = calculate_metrics(tps, tns, fps, fns)
     print(f"Accuracy: {accuracy}, F1 Score: {f1_score}")
-    with open(outpath + args.model + "_task1_result_" + args.scale + ".txt", "a", encoding="utf-8") as f:
+    with open(OUTPATH + args.model + "_task1_result_" + args.scale + ".txt", "a", encoding="utf-8") as f:
         f.write(f"Accuracy: {accuracy}, F1 Score: {f1_score}")
 
 def task2_main(args, targetLM):
 
-    # Initialize models and logger 
-    system_prompt = get_system_prompt()
-    # targetLM = load_models(args)
-    
-    # logger = WandBLogger(args, system_prompt)
-
     ### load dataset
     data_files = {"validation" : "test.jsonl"}
     dataset = datasets.load_dataset(
-        # r"/data/BJiao/code_analysis/Code_analysis/llama_dataset", data_files=data_files
-        # r"/home/fnii/workspace/datasets/llama_dataset", data_files=data_files
-        "./benchset/task2/" + args.scale, data_files=data_files
+        "./VulDetectBench/task2/", data_files=data_files
     )
-    cols = ["instruction", "input", "output", "cwe"]
-    # train_data = dataset["train"].shuffle().map(generate_and_tokenize_prompt, remove_columns=cols)
-    val_data = dataset["validation"].shuffle().map(generate_concrete_prompt, remove_columns=cols,)
+    cols = ["system", "input", "output", "cwe", "idx"]
+    val_data = dataset["validation"].map(generate_concrete_prompt, remove_columns=cols,)
 
-    scores, scores_1, scores_5 = 0, 0, 0
+     # 初始化wandb
+    logger = wandb.init(project="VulDetectionBench", 
+               name=f"{args.model}_task2_{args.scale}",
+               config=args,)
+
+    scores, scores_1, scores_5, scores_15 = 0, 0, 0, 0
+    table = pd.DataFrame()
 
     for idx, prompt in enumerate(val_data):
 
-        print(prompt["user_prompt"])
+        try :
 
-        target_response_list = targetLM.get_response([prompt["user_prompt"]])
+            target_response_list = targetLM.get_response([prompt["system"]], [prompt["input"]], [prompt["user_prompt"]])
 
-        # Save target responses
-        for i, target_response in enumerate(target_response_list):
-            print(f"Target response {i+1}: {target_response}")
+            score = task2_accuracy(target_response_list[0], prompt["label"])
 
-        print("-" * 20)
+            scores += score
+            if score == 1:
+                scores_1 += 1
+            if score == 0.5:
+                scores_5 += 1
+            if score == 1.5:
+                scores_15 += 1
 
-        print(prompt["label"])
+            # 使用wandb记录
+            logger.log({"idx" : idx + 1, "accuracy": scores / (idx + 1), "score_1": scores_1, "score_5": scores_5, "score_15": scores_15})
 
-        score = task2_accuracy(target_response_list[0], prompt["label"])
+            table = pd.concat([table, pd.DataFrame({"Index": [idx + 1],
+                                                    "Prompt": [prompt["user_prompt"]], 
+                                                    "Target response": [target_response_list[0]], 
+                                                    "Label": [prompt["label"]], 
+                                                    "Score": [score],
+                                                    "Accuracy": [scores / (idx + 1)],
+                                                    "Score 1": [scores_1],
+                                                    "Score 0.5": [scores_5],
+                                                    "Score 1.5": [scores_15],
+                                                    "cwe" : [prompt["cwe"]]})])
+            
+            table.to_csv(OUTPATH + args.model + "_task2_result_" + args.scale + ".csv", index=False, encoding="utf-8")
 
-        print(score)
+            print("Finished processing prompt ", idx + 1)
 
-        scores += score
-        if score == 1:
-            scores_1 += 1
-        if score == 0.5:
-            scores_5 += 1
+        except Exception as e:
+            logger.log({"idx" : idx + 1, "accuracy": scores / (idx + 1), "score_1": scores_1, "score_5": scores_5, "score_15": scores_15})
 
-        print("idx: ", idx + 1)
-        print(scores)
+            table = pd.concat([table, pd.DataFrame({"Index": [idx + 1],
+                                                    "Prompt": [prompt["user_prompt"]], 
+                                                    "Target response": [target_response_list], 
+                                                    "Label": [prompt["label"]], 
+                                                    "Score": [0],
+                                                    "Accuracy": [scores / (idx + 1)],
+                                                    "Score 1": [0],
+                                                    "Score 0.5": [0],
+                                                    "Score 1.5": [0],
+                                                    "cwe" : [prompt["cwe"]]})])
+            
+            table.to_csv(OUTPATH + args.model + "_task2_result_" + args.scale + ".csv", index=False, encoding="utf-8")
 
-        with open(outpath + args.model + "_task2_result_" + args.scale + ".txt", "a", encoding="utf-8") as f:
-            f.write(f"idx : score = {idx + 1} : {scores}\n")
-            f.write(f"Score on 1: {scores_1}\n")
-            f.write(f"Score on 0.5: {scores_5}\n")
-            f.write(f"------------------------\n")
-            f.write(f"Prompt: {prompt['user_prompt']}\n")
-            f.write(f"------------------------\n")
-            f.write(f"Target response: {target_response_list[0]}\n")
-            f.write(f"------------------------\n")
-            f.write(f"label: {prompt['label']}\n")
-            f.write(f"==============================================================\n")
+            print("Finished processing prompt ", idx + 1)
+            continue
+
+    logger.finish()
 
 def task3_main(args, targetLM):
 
-    # Initialize models and logger 
-    system_prompt = get_system_prompt()
-    # targetLM = load_models(args)
-    
-    # logger = WandBLogger(args, system_prompt)
-
     ### load dataset
     data_files = {"validation" : "test.jsonl"}
     dataset = datasets.load_dataset(
-        # r"/data/BJiao/code_analysis/Code_analysis/llama_dataset", data_files=data_files
-        # r"/home/fnii/workspace/datasets/llama_dataset", data_files=data_files
-        "./benchset/task3/" + args.scale, data_files=data_files
+        "./VulDetectBench/task3/", data_files=data_files
     )
-    cols = ["instruction", "input", "output", "cwe"]
-    # train_data = dataset["train"].shuffle().map(generate_and_tokenize_prompt, remove_columns=cols)
-    val_data = dataset["validation"].shuffle().map(generate_concrete_prompt, remove_columns=cols,)
+    cols = ["system", "input", "output", "cwe", "idx"]
+    val_data = dataset["validation"].map(generate_concrete_prompt, remove_columns=cols,)
+
+    # Initialize wandb
+    logger = wandb.init(project="VulDetectionBench", 
+               name=f"{args.model}_task3_{args.scale}",
+               config=args,)
 
     scores = 0
+    rough_scores = 0
+    table = pd.DataFrame()
 
     for idx, prompt in enumerate(val_data):
 
-        target_response_list = targetLM.get_response([prompt["user_prompt"]])
+        try:
 
-        # Save target responses
-        for i, target_response in enumerate(target_response_list):
-            print(f"Target response {i+1}: {target_response}")
+            target_response_list = targetLM.get_response([prompt["system"]], [prompt["input"]], [prompt["user_prompt"]])
 
-        print("-" * 20)
+            try:
+                intersection, union, diff, score, rough_score = eval_code_similarity(target_response_list[0], prompt["label"])
+            except Exception as e:
+                intersection, union, diff, score, rough_score = "", "", "", 0, 0
+                target_response_list = ["Error in processing"]
 
-        print(prompt["label"])
+            scores += score
+            rough_scores += rough_score
 
-        score = eval_code_similarity(target_response_list[0], prompt["label"])
+            # 使用wandb记录
+            logger.log({"idx" : idx + 1, "accuracy": scores / (idx + 1), "rough_accuracy": rough_scores / (idx + 1)})
 
-        print(score)
+            table = pd.concat([table, pd.DataFrame({"Index": [idx + 1],
+                                                    "Prompt": [prompt["user_prompt"]], 
+                                                    "Target response": [target_response_list[0]], 
+                                                    "Label": [prompt["label"]], 
+                                                    "Intersection": [intersection],
+                                                    "Union": [union],
+                                                    "Difference": [diff],
+                                                    "local_accuracy": [score],
+                                                    "local_rough_accuracy": [rough_score],
+                                                    "Accuracy": [scores / (idx + 1)],
+                                                    "Rough Accuracy": [rough_scores / (idx + 1)],
+                                                    "cwe" : [prompt["cwe"]]})])
+            
+            table.to_csv(OUTPATH + args.model + "_task3_result_" + args.scale + ".csv", index=False, encoding="utf-8")
 
-        scores += score
-        print("idx: ", idx + 1)
-        print(scores / (idx + 1))
+            print("Finished processing prompt ", idx + 1)
 
-        with open(outpath + args.model + "_task3_result_" + args.scale + ".txt", "a", encoding="utf-8") as f:
-            f.write(f"idx : score = {idx + 1} : {score}\n")
-            f.write(f"Score for {idx + 1} : {scores / (idx + 1)}\n")
-            f.write(f"------------------------\n")
-            f.write(f"Prompt: {prompt['user_prompt']}\n")
-            f.write(f"------------------------\n")
-            f.write(f"Target response: {target_response_list[0]}\n")
-            f.write(f"------------------------\n")
-            f.write(f"label: {prompt['label']}\n")
-            f.write(f"==============================================================\n")
+        except Exception as e:
+            logger.log({"idx" : idx + 1, "accuracy": scores / (idx + 1), "rough_accuracy": rough_scores / (idx + 1)})
+
+            table = pd.concat([table, pd.DataFrame({"Index": [idx + 1],
+                                                    "Prompt": [prompt["user_prompt"]], 
+                                                    "Target response": [target_response_list], 
+                                                    "Label": [prompt["label"]], 
+                                                    "Intersection": [intersection],
+                                                    "Union": [union],
+                                                    "Difference": [diff],
+                                                    "local_accuracy": [0],
+                                                    "local_rough_accuracy": [0],
+                                                    "Accuracy": [scores / (idx + 1)],
+                                                    "Rough Accuracy": [rough_scores / (idx + 1)],
+                                                    "cwe" : [prompt["cwe"]]})])
+            
+            table.to_csv(OUTPATH + args.model + "_task3_result_" + args.scale + ".csv", index=False, encoding="utf-8")
+
+            print("Worse processing prompt ", idx + 1)
+            continue
+
+    logger.finish()
 
 def task4_main(args, targetLM):
 
     # Initialize models and logger 
     system_prompt = get_system_prompt()
-    # targetLM = load_models(args)
-    
-    # logger = WandBLogger(args, system_prompt)
 
     ### load dataset
     data_files = {"validation" : "test.jsonl"}
     dataset = datasets.load_dataset(
-        # r"/data/BJiao/code_analysis/Code_analysis/llama_dataset", data_files=data_files
-        # r"/home/fnii/workspace/datasets/llama_dataset", data_files=data_files
-        "./benchset/task4/" + args.scale, data_files=data_files
+        "./VulDetectBench/task4/", data_files=data_files
     )
-    cols = ["instruction", "input", "output", "cwe"]
-    # train_data = dataset["train"].shuffle().map(generate_and_tokenize_prompt, remove_columns=cols)
-    val_data = dataset["validation"].shuffle().map(generate_concrete_prompt, remove_columns=cols,)
+    cols = ["system", "input", "output", "cwe", "idx"]
+    val_data = dataset["validation"].map(generate_concrete_prompt, remove_columns=cols,)
+
+    # Initialize wandb
+    logger = wandb.init(project="VulDetectionBench", 
+               name=f"{args.model}_task4_{args.scale}",
+               config=args,)
 
     scores = 0
+    rough_scores = 0
+    table = pd.DataFrame()
 
     for idx, prompt in enumerate(val_data):
 
-        target_response_list = targetLM.get_response([prompt["user_prompt"]])
+        try: 
+            target_response_list = targetLM.get_response([prompt["system"]], [prompt["input"]], [prompt["user_prompt"]])
 
-        # Save target responses
-        for i, target_response in enumerate(target_response_list):
-            print(f"Target response {i+1}: {target_response}")
+            try:
+                intersection, union, diff, score, rough_score = eval_code_similarity(target_response_list[0], prompt["label"])
+            except Exception as e:
+                intersection, union, diff, score, rough_score = 0, 0, 0, 0, 0
+                target_response_list = ["Error in processing"]
 
-        print("-" * 20)
+            scores += score
+            rough_scores += rough_score
 
-        print(prompt["label"])
+            # 使用wandb记录
+            logger.log({"idx" : idx + 1, "accuracy": scores / (idx + 1), "rough_accuracy": rough_scores / (idx + 1)})
 
-        score = eval_code_similarity(target_response_list[0], prompt["label"])
+            table = pd.concat([table, pd.DataFrame({"Index": [idx + 1],
+                                                    "Prompt": [prompt["user_prompt"]], 
+                                                    "Target response": [target_response_list], 
+                                                    "Label": [prompt["label"]], 
+                                                    "Intersection": [intersection],
+                                                    "Union": [union],
+                                                    "Difference": [diff],
+                                                    "local_accuracy": [score],
+                                                    "local_rough_accuracy": [rough_score],
+                                                    "Accuracy": [scores / (idx + 1)],
+                                                    "Rough Accuracy": [rough_scores / (idx + 1)],
+                                                    "cwe" : [prompt["cwe"]]})])
+            
+            table.to_csv(OUTPATH + args.model + "_task4_result_" + args.scale + ".csv", index=False, encoding="utf-8")
+            
+            print("Finished processing prompt ", idx + 1)
+        
+        except Exception as e:
+            logger.log({"idx" : idx + 1, "accuracy": scores / (idx + 1), "rough_accuracy": rough_scores / (idx + 1)})
 
-        print(score)
+            table = pd.concat([table, pd.DataFrame({"Index": [idx + 1],
+                                                    "Prompt": [prompt["user_prompt"]], 
+                                                    "Target response": [target_response_list], 
+                                                    "Label": [prompt["label"]], 
+                                                    "Intersection": [0],
+                                                    "Union": [0],
+                                                    "Difference": [0],
+                                                    "local_accuracy": [0],
+                                                    "local_rough_accuracy": [0],
+                                                    "Accuracy": [scores / (idx + 1)],
+                                                    "Rough Accuracy": [rough_scores / (idx + 1)],
+                                                    "cwe" : [prompt["cwe"]]})])
+            
+            table.to_csv(OUTPATH + args.model + "_task4_result_" + args.scale + ".csv", index=False, encoding="utf-8")
 
-        scores += score
-        print("idx: ", idx + 1)
-        print(scores / (idx + 1))
+            print("Worse processing prompt ", idx + 1)
+            continue
 
-        with open(outpath + args.model + "_task4_result_" + args.scale + ".txt", "a", encoding="utf-8") as f:
-            f.write(f"idx : score = {idx + 1} : {score}\n")
-            f.write(f"Score for {idx + 1} : {scores / (idx + 1)}\n")
-            f.write(f"------------------------\n")
-            f.write(f"Prompt: {prompt['user_prompt']}\n")
-            f.write(f"------------------------\n")
-            f.write(f"Target response: {target_response_list[0]}\n")
-            f.write(f"------------------------\n")
-            f.write(f"label: {prompt['label']}\n")
-            f.write(f"==============================================================\n")
+    logger.finish()
+
+def task5_main(args, targetLM):
+
+    # Initialize models and logger 
+    system_prompt = get_system_prompt()
+
+    ### load dataset
+    data_files = {"validation" : "test.jsonl"}
+    dataset = datasets.load_dataset(
+        "./VulDetectBench/task5/" + args.scale, data_files=data_files
+    )
+    cols = ["system", "input", "output", "cwe", "idx"]
+    val_data = dataset["validation"].map(generate_concrete_prompt, remove_columns=cols,)
+
+    # Initialize wandb
+    logger = wandb.init(project="VulDetectionBench", 
+               name=f"{args.model}_task5_{args.scale}",
+               config=args,)
+
+
+    table = pd.DataFrame()
+    scores = 0
+    tps = 0
+    all_token_counts = 0
+
+    for idx, prompt in enumerate(val_data):
+
+        try: 
+            target_response_list = targetLM.get_response([prompt["system"]], [prompt["input"]], [prompt["user_prompt"]])
+
+            # Calucrate the accuracy
+
+            score, tp, all_token_count = task5_evaluate(target_response_list[0], prompt["label"])
+
+            scores += score
+            tps += tp
+            all_token_counts += all_token_count
+
+            # 使用wandb记录
+            logger.log({"idx" : idx + 1, "accuracy": scores / (idx + 1), "rough_accuracy": tps / all_token_counts})
+
+            table = pd.concat([table, pd.DataFrame({"Index": [idx + 1],
+                                                    "Prompt": [prompt["user_prompt"]], 
+                                                    "Target response": [target_response_list],
+                                                    "Label": [prompt["label"]],
+                                                    "local_accuracy": [score],
+                                                    "Accuracy": [scores / (idx + 1)],
+                                                    "Rough Accuracy": [tps / all_token_counts],
+                                                    "cwe" : [prompt["cwe"]]})])
+                                                   
+            
+            table.to_csv(OUTPATH + args.model + "_task5_result_" + args.scale + ".csv", index=False, encoding="utf-8")
+
+            print("Finished processing prompt ", idx + 1)
+        
+        except Exception as e:
+            logger.log({"idx" : idx + 1, "accuracy": scores / (idx + 1), "rough_accuracy": tps / all_token_counts})
+
+            table = pd.concat([table, pd.DataFrame({"Index": [idx + 1],
+                                                    "Prompt": [prompt["user_prompt"]], 
+                                                    "Target response": [target_response_list], 
+                                                    "Label": [prompt["label"]],
+                                                    "local_accuracy": [0],
+                                                    "Accuracy": [scores / (idx + 1)],
+                                                    "Rough Accuracy": [tps / all_token_counts],
+                                                    "cwe" : [prompt["cwe"]]})])
+            
+            table.to_csv(OUTPATH + args.model + "_task5_result_" + args.scale + ".csv", index=False, encoding="utf-8")
+
+            print("Worse processing prompt ", idx + 1)
+            continue
+
+    logger.finish()
 
 if __name__ == '__main__':
 
@@ -313,9 +458,13 @@ if __name__ == '__main__':
     ########### Generate model parameters ##########
     parser.add_argument(
         "--model",
-        default = "qwen",
+        default = "gemini-pro",
         help = "Name of model.",
-        choices=["vicuna", "llama-2", "gpt-3.5-turbo", "gpt-4", "claude-instant-1","claude-2", "palm-2", "gemini-pro", "deepseek-coder", "qwen", "codellama", "chatglm3-6b", "baichuan-7b", "baichuan-13b"]
+        choices=["vicuna-7b", "llama-2-7b", "vicuna-13b", "llama-2-13b", "llama-3-8b", 
+                 "gpt-3.5-turbo", "gpt-4", "claude-instant-1", 
+                 "claude-2", "palm-2", "gemini-pro", "deepseek-coder", "qwen-7b", "qwen-14b", "codellama-7b", "codellama-13b", 
+                 "chatglm3-6b", "baichuan-7b", "baichuan-13b", 
+                 "ernie4", "yi34b", "mixtral", "llama2-70b"]
     )
     parser.add_argument(
         "--scale",
@@ -356,13 +505,25 @@ if __name__ == '__main__':
         default = False,
         help = "Judge if lora."
     )
+
+    parser.add_argument(
+        "--api",
+        type = bool,
+        default = False,
+        help = "api if True, else False."
+    )
     ##################################################
     
     # TODO: Add a quiet option to suppress print statement
     args = parser.parse_args()
 
-    targetLM = load_models(args)
+    if args.api:
+        targetLM = api_use(args)
+    else:
+        targetLM = load_models(args)
+
     task1_main(args, targetLM)
     task2_main(args, targetLM)
     task3_main(args, targetLM)
     task4_main(args, targetLM)
+    # task5_main(args, targetLM)

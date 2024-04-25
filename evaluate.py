@@ -5,6 +5,8 @@ from tqdm import tqdm
 import re 
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from nltk import word_tokenize
+import ast
 
 def eval_accuracy(preds : str, labels : str):
     # re compile pattern
@@ -12,9 +14,6 @@ def eval_accuracy(preds : str, labels : str):
     
     preds = pattern.findall(preds)
     labels = pattern.findall(labels)
-
-    print("preds: ", preds)
-    print("labels: ", labels)
 
     intersection = len(set(preds).intersection(set(labels)))
 
@@ -27,12 +26,6 @@ def task1_accuracy(preds : str, labels : str):
     
     if "NO" in preds or "is not vulnerable" in preds:
         pred_label = 0
-
-    print("judge:")
-    print(pred_label)
-    # TODO: how to diff no and yes
-    # if "NO" or "No" in preds:
-    #     pred_label = 0
 
     if "YES" in labels:
         if pred_label == 1:
@@ -60,8 +53,6 @@ def task2_accuracy(preds : str, labels : str):
         score_b += 1
     if eval_accuracy(preds, labels[1]) > 0:
         score_b += 0.5
-    # print("score_a: ", score_a)
-    # print("score_b: ", score_b)
     return max(score_a, score_b)
         
 def calculate_cosine_similarity(text1, text2):
@@ -73,41 +64,78 @@ def calculate_cosine_similarity(text1, text2):
 
 def eval_code_similarity(preds : str, labels : str):
     # re compile pattern for code
-    pattern = re.compile(r"```(.+?)```", re.S)
+    # pattern = re.compile(r"```(.+?)```", re.S)
+    pattern = re.compile(r"`(.+?)`", re.S)
+    pattern2 = re.compile(r"```(.+?)```", re.S)
+
     code1 = pattern.findall(preds)
+    code1 += pattern2.findall(preds)
     code2 = pattern.findall(labels)
+    code2 += pattern2.findall(labels)
     if len(code1) == 0 or len(code2) == 0:
-        return 0
-    code1 = code1[0].split('\n')
+        return None, None, None, 0, 0
+    # code1 = code1[0].split('\n')
+    # code1为code1中最长的代码块
+    code1 = max(code1, key=len).split('\n')
     if len(code1) == 0:
-        return 0
+        return 0, 0, 0, 0, 0
     code1 = [x.strip().replace(" ", "") for x in code1]
     code1 = [x for x in code1 if x not in ["c", "cpp", "python"]]
     code1 = list(filter(None, code1))
-    code2 = code2[0].split('\n')
+    # code2 = code2[0].split('\n')
+    code2 = max(code2, key=len).split('\n')
     code2 = [x.strip().replace(" ", "") for x in code2]
     code2 = list(filter(None, code2))
-    print("code1: ", code1)
-    print("code2: ", code2)
 
     # calculate aou
     s1 = set(code1)
     s2 = set(code2)
-    print('ins: %s'%(s1.intersection(s2)))
-    print('uni: %s'%(s1.union(s2)))
-    print('dif: %s'%(s1.difference(s2).union(s2.difference(s1))))
+
     intersection = len(s1.intersection(s2))
     union = len(s1.union(s2))
-    similarity = intersection / union
-    print("similarity: ", similarity)
-    return similarity
+
+    try:
+
+        similarity = intersection / union
+        rough_similarity = intersection / len(s2)
+
+        return s1.intersection(s2), s1.union(s2), s1.difference(s2).union(s2.difference(s1)), similarity, rough_similarity
+    
+    except ZeroDivisionError:
+
+        return s1.intersection(s2), s1.union(s2), s1.difference(s2).union(s2.difference(s1)), 0, 0
+
 
 def calculate_metrics(tp, tn, fp, fn):
-    accuracy = (tp + tn) / (tp + tn + fp + fn)
     
-    precision = tp / (tp + fp)
-    recall = tp / (tp + fn)
+    try:
+        
+        accuracy = (tp + tn) / (tp + tn + fp + fn)
+        
+        precision = tp / (tp + fp)
+        recall = tp / (tp + fn)
+        
+        f1_score = 2 * (precision * recall) / (precision + recall)
+        
+        return accuracy, f1_score
     
-    f1_score = 2 * (precision * recall) / (precision + recall)
+    except ZeroDivisionError:
+
+        return 0, 0
     
-    return accuracy, f1_score
+def task5_evaluate(preds : str, labels : str):
+
+    labels=ast.literal_eval(labels)
+    tokens=word_tokenize(preds)
+     # calculate
+    tp=0
+
+    for label in labels:
+        if label in tokens:
+            tp+=1
+
+        else:
+         #形成并集,不命中时加入总token.
+            tokens.append(label)
+        return tp/len(tokens) , tp, len(tokens)
+

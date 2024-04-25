@@ -9,8 +9,8 @@ import google.generativeai as palm
 
 client = OpenAI(
         # defaults to os.environ.get("OPENAI_API_KEY")
-        api_key="sk-oFTHICsP8sHZHDMTssYbD3PRGtzNXfPmZCrSxf9hCtbgZJyA",
-        base_url="https://api.chatanywhere.tech/v1"
+        api_key="sk-proj-J49epKRBvMxMZnhxRXz4T3BlbkFJVLwQklpVQsbH4cUq59M3",
+        # base_url="https://api.chatanywhere.tech/v1"
     )
 
 
@@ -30,12 +30,17 @@ class HuggingFace(LanguageModel):
         self.model = model 
         self.tokenizer = tokenizer
         self.eos_token_ids = [self.tokenizer.eos_token_id]
+        if "llama-3" in model_name:
+            self.eos_token_ids.extend([
+                self.tokenizer.convert_tokens_to_ids("<|eot_id|>")
+            ])
 
     def batched_generate(self, 
                         full_prompts_list,
                         max_n_tokens: int, 
                         temperature: float,
-                        top_p: float = 1.0,):
+                        top_p: float = 1.0,
+                        top_k: int = 50):
         inputs = self.tokenizer(full_prompts_list, return_tensors='pt', padding=True)
         inputs = {k: v.to(self.model.device.index) for k, v in inputs.items()}
     
@@ -48,6 +53,7 @@ class HuggingFace(LanguageModel):
                 temperature=temperature,
                 eos_token_id=self.eos_token_ids,
                 top_p=top_p,
+                top_k=top_k,
             )
         else:
             output_ids = self.model.generate(
@@ -56,6 +62,7 @@ class HuggingFace(LanguageModel):
                 do_sample=False,
                 eos_token_id=self.eos_token_ids,
                 top_p=1,
+                top_k=top_k,
                 temperature=1, # To prevent warning messages
             )
             
@@ -93,7 +100,8 @@ class GPT(LanguageModel):
     def generate(self, conv: List[Dict], 
                 max_n_tokens: int, 
                 temperature: float,
-                top_p: float):
+                top_p: float,
+                top_k: int):
         '''
         Args:
             conv: List of dictionaries, OpenAI API format
@@ -112,6 +120,7 @@ class GPT(LanguageModel):
                             max_tokens = max_n_tokens,
                             temperature = temperature,
                             top_p = top_p,
+                            # top_k = top_k,
                             # request_timeout = self.API_TIMEOUT,
                             )
                 output = response.choices[0].message.content
@@ -127,8 +136,9 @@ class GPT(LanguageModel):
                         convs_list: List[List[Dict]],
                         max_n_tokens: int, 
                         temperature: float,
-                        top_p: float = 1.0,):
-        return [self.generate(conv, max_n_tokens, temperature, top_p) for conv in convs_list]
+                        top_p: float = 1.0,
+                        top_k: int = 50):
+        return [self.generate(conv, max_n_tokens, temperature, top_p, top_k) for conv in convs_list]
 
 class Claude():
     API_RETRY_SLEEP = 10
@@ -147,7 +157,8 @@ class Claude():
     def generate(self, conv: List, 
                 max_n_tokens: int, 
                 temperature: float,
-                top_p: float):
+                top_p: float,
+                top_k: int):
         '''
         Args:
             conv: List of conversations 
@@ -165,7 +176,8 @@ class Claude():
                     max_tokens_to_sample=max_n_tokens,
                     prompt=conv,
                     temperature=temperature,
-                    top_p=top_p
+                    top_p=top_p,
+                    top_k=top_k,
                 )
                 output = completion.completion
                 break
@@ -180,8 +192,9 @@ class Claude():
                         convs_list: List[List[Dict]],
                         max_n_tokens: int, 
                         temperature: float,
-                        top_p: float = 1.0,):
-        return [self.generate(conv, max_n_tokens, temperature, top_p) for conv in convs_list]
+                        top_p: float = 1.0,
+                        top_k: int = 50):
+        return [self.generate(conv, max_n_tokens, temperature, top_p, top_k) for conv in convs_list]
         
 class PaLM():
     API_RETRY_SLEEP = 10
@@ -190,7 +203,7 @@ class PaLM():
     API_MAX_RETRY = 5
     API_TIMEOUT = 20
     default_output = "I'm sorry, but I cannot assist with that request."
-    API_KEY = os.getenv("PALM_API_KEY")
+    API_KEY = "AIzaSyCs4nugDBDzf_6DOn2KN7zUd5c7zXEHuIo"
 
     def __init__(self, model_name) -> None:
         self.model_name = model_name
@@ -199,7 +212,8 @@ class PaLM():
     def generate(self, conv: List, 
                 max_n_tokens: int, 
                 temperature: float,
-                top_p: float):
+                top_p: float,
+                top_k: int):
         '''
         Args:
             conv: List of dictionaries, 
@@ -215,7 +229,8 @@ class PaLM():
                 completion = palm.chat(
                     messages=conv,
                     temperature=temperature,
-                    top_p=top_p
+                    top_p=top_p,
+                    top_k=top_k,
                 )
                 output = completion.last
                 
@@ -251,7 +266,7 @@ class GENAI():
     API_TIMEOUT = 20
     default_output = "I'm sorry, but I cannot assist with that request."
     # API_KEY = os.getenv("GENAI_API_KEY")
-    API_KEY = "AIzaSyCs4nugDBDzf_6DOn2KN7zUd5c7zXEHuIo"
+    API_KEY = "AIzaSyBH882fBCPbGpnzW_O2gWzvTmZxDFUMwaE"
 
     def __init__(self, model_name) -> None:
         self.model_name = model_name
@@ -260,7 +275,8 @@ class GENAI():
     def generate(self, conv: List, 
                 max_n_tokens: int, 
                 temperature: float,
-                top_p: float):
+                top_p: float,
+                top_k: int):
         '''
         Args:
             conv: List of dictionaries, 
@@ -304,7 +320,8 @@ class GENAI():
                         convs_list: List[List[Dict]],
                         max_n_tokens: int, 
                         temperature: float,
-                        top_p: float = 1.0,):
-        return [self.generate(conv, max_n_tokens, temperature, top_p) for conv in convs_list]
+                        top_p: float = 1.0,
+                        top_k: int = 50):
+        return [self.generate(conv, max_n_tokens, temperature, top_p, top_k) for conv in convs_list]
 
 
