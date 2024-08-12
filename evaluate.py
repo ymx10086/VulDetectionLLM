@@ -123,19 +123,43 @@ def calculate_metrics(tp, tn, fp, fn):
 
         return 0, 0
     
-def task5_evaluate(preds : str, labels : str):
+# 加了两个补丁函数，评测函数task5_evaluate用到了，其他都没变
+def replace_non_alphanumeric(s):
+    
+    s = re.sub(r'[^a-zA-Z0-9_]', ' ', s)
+    
+    s = re.sub(r'\s+', ' ', s)
+    return s
 
-    labels=ast.literal_eval(labels)
+def filter_valid_tokens(sample):
+    reserved_words = ["_", "for", "while", "if", "else", "printf", "return"]
+    # tp_candidate=set(replace_non_alphanumeric(sample['Trigger Point']).split())
+    # cp_candidate=set(replace_non_alphanumeric(sample['Crossover Point']).split())
+    # output=tp_candidate&cp_candidate
+
+    # 取差集output = replace_non_alphanumeric(sample).split() - reserved_words
+    output = set(replace_non_alphanumeric(sample).split()) - set(reserved_words)
+
+    result=" ".join(list(output))
+    return result
+
+def task5_evaluate(preds : str, labels : str):
+    print("preds: ", preds)
+    print("labels: ", labels)
+    labels=labels.split()
+    preds=filter_valid_tokens(preds)
     tokens=word_tokenize(preds)
-     # calculate
+    # calculate
     tp=0
 
     for label in labels:
         if label in tokens:
             tp+=1
-
         else:
-         #形成并集,不命中时加入总token.
+    #形成并集,不命中时加入总token.
             tokens.append(label)
-        return tp/len(tokens) , tp, len(tokens)
+
+    print(tp, len(tokens))
+
+    return tp/len(tokens) , tp, len(tokens)
 
